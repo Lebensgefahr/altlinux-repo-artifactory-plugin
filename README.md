@@ -50,7 +50,7 @@ repository/
                     └── sample.rpm
 
 ```
-Repository path `repository:/altlinux/p8/community/noarch/RPMS.classic/sample.rpm will be transformed into `/var/opt/jfrog/artifactory/repository/altlinux/p8/community/noarch/RPMS.classic/sample.rpm`
+Repository path `repository:/altlinux/p8/community/noarch/RPMS.classic/sample.rpm` will be transformed into `/var/opt/jfrog/artifactory/repository/altlinux/p8/community/noarch/RPMS.classic/sample.rpm`
 
 After metadata files are generated successfully package file will be removed. Other files will be kept for the repository lifetime. 
 In fact all the files except pkglist.classic in the example are not needed and will be overwritten at the next package upload. 
