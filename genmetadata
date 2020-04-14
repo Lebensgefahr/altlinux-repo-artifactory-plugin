@@ -1,0 +1,99 @@
+#!/bin/bash
+
+ARTIFACTORY_HOME="/var/opt/jfrog/artifactory"
+export LD_LIBRARY_PATH=$ARTIFACTORY_HOME/custom/lib
+export PATH=$ARTIFACTORY_HOME/custom/bin:$PATH
+
+# Global release file sections
+origin="Unknown"
+label="Unknown"
+suite="Unknown"
+codename="Unknown"
+date="$(date -R)"
+architectures="Unknown"
+description="Not Available"
+
+# Component release file sections
+archive="Unknown"
+version="Unknown"
+architecture="Unknown"
+notautomatic="false"
+
+
+topdir="$1"
+comp="$2"
+
+basedir_=base
+basedir="`echo "$topdir/$basedir_"|tr -s /`"
+
+pkglist_=$basedir_/pkglist
+release_=$basedir_/release
+pkglist=$basedir/pkglist
+release=$basedir/release
+
+
+function phashstuff() {
+    size=`wc -c <"$1"`
+    md5=`md5sum "$1"|cut -f1 -d\  `
+    echo " $md5 $size $2"
+}
+
+function phash() {
+	if [ -f "$1" ]; then
+		phashstuff "$1" "$2" >> "$3"
+	fi
+}
+
+# Create hashfile
+function create_hashfile() {
+
+cat > "$release.$comp" <<- __EOF__
+Archive: $archive
+Component: $comp
+Version: $version
+Origin: $origin
+Label: $label
+Architecture: $architecture
+NotAutomatic: $notautomatic
+__EOF__
+
+cat > "$release" <<- __EOF__
+Origin: $origin
+Label: $label
+Suite: $suite
+Codename: $codename
+Date: "$(date -R)"
+Architectures: $architectures
+Components: $comp
+Description: $description
+MD5Sum:
+__EOF__
+
+    phash "$pkglist.$comp" "$pkglist_.$comp" "$release"
+    phash "$pkglist.$comp.bz2" "$pkglist_.$comp.bz2" "$release"
+    phash "$pkglist.$comp.xz" "$pkglist_.$comp.xz" "$release"
+    phash "$release.$comp" "$release_.$comp" "$release"
+    return 0
+}
+
+function create_metadata_file() {
+
+    PIDS=()
+
+    genpkglist --bloat --append "$@"
+
+    rm -f "$pkglist.$comp".{xz,bz2}
+
+    for i in bzip2 xz; do
+        $i -k "$pkglist.$comp" >/dev/null 2>&1 &
+        PIDS+=" $! "
+    done
+
+    for PID in ${PIDS[@]}; do
+        wait "$PID" || return 1
+    done
+    
+    create_hashfile || return 1
+}
+
+create_metadata_file "$@" || exit 1
