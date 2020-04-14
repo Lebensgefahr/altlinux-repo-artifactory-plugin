@@ -12,9 +12,9 @@ Copy storagePlugin.groovy into /var/opt/jfrog/artifactory/etc/artifactory/plugin
 curl -u admin:password -X POST https://artifactory.host/artifactory/api/plugins/reload
 
 ```
-* Copy /usr/bin/genpkglist binary from apt-repo-tools into /var/opt/jfrog/artifactory/custom/bin/
-* Copy genmetadata script into /var/opt/jfrog/artifactory/custom/bin/
-* Copy all libraries linked with genpkglist into /var/opt/jfrog/artifactory/custom/lib
+* Copy `/usr/bin/genpkglist` binary from apt-repo-tools into `/var/opt/jfrog/artifactory/custom/bin/`
+* Copy genmetadata script into `/var/opt/jfrog/artifactory/custom/bin/`
+* Copy all libraries linked with genpkglist into `/var/opt/jfrog/artifactory/custom/lib`
 
 ## Usage
 
