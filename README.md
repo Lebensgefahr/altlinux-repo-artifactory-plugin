@@ -32,7 +32,7 @@ curl -s -u admin:password -T sample.rpm 'https://artifactory.host/artifactory/re
 
 ## Description
 
-After package uploading plugin creates local direcotries in /var/opt/jfrog/artifactory to process it with genpkglist.
+After package uploading plugin creates local directories in /var/opt/jfrog/artifactory to process it with genpkglist.
 For the sample repository described in the usage section directories structures will be:
 ```
 repository/
@@ -64,4 +64,4 @@ In case of plugin using it only appends newly uploaded packages to the already e
 If package with the same file name is already in artifactory it will answer with 409 code. 
 It is not possible to load package with the same name twice to prevent duplicates in pkglist. 
 On every error occured during copying from filestore, generating metadata or deploy, it will cancel package uploading and return 500 error. 
-Plugin works for the directories which name starts with "altlinux" only.
+Plugin works for the path which contains directory with name "altlinux" only.

@@ -16,7 +16,7 @@ storage {
     // genpkglist do not process duplicates, so it can't be used for editing, removing or quering
     // so this check is needed to be sure that there is only one record for one file in it
     beforeCreate { item -> 
-    	if (item.repoPath.path.startsWith("altlinux")) {
+    	if (item.repoPath.path.contains("altlinux")) {
 	    if (item.repoPath.isFile() && item.repoPath.path.endsWith(".rpm")) {
 	    
                 def sha1 = item.sha1
@@ -29,7 +29,7 @@ storage {
 
     afterCreate { item ->
 
-    	if (item.repoPath.path.startsWith("altlinux")) {
+    	if (item.repoPath.path.contains("altlinux")) {
 	    if (item.repoPath.isFile() && item.repoPath.path.endsWith(".rpm")) {
 
 		def String sha1 = item.sha1
