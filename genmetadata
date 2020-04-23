@@ -19,9 +19,26 @@ version="Unknown"
 architecture="Unknown"
 notautomatic="false"
 
+PARAMS=()
 
-topdir="$1"
-comp="$2"
+while [[ $# -gt 0 ]]; do
+    key="$1"
+    case ${key} in
+        --append)
+            OPTIONS+="$key"; shift
+	;;
+	--topdir)
+	    topdir="$2"; shift 2
+	;;
+	--comp)
+	    comp="$2"; shift 2
+	;;
+	*)
+	    echo "Unknown parameters"
+	    exit 1
+	;;
+    esac
+done
 
 basedir_=base
 basedir="`echo "$topdir/$basedir_"|tr -s /`"
@@ -80,7 +97,7 @@ function create_metadata_file() {
 
     PIDS=()
 
-    genpkglist --bloat --append "$@"
+    genpkglist --bloat "$@"
 
     rm -f "$pkglist.$comp".{xz,bz2}
 
@@ -96,4 +113,4 @@ function create_metadata_file() {
     create_hashfile || return 1
 }
 
-create_metadata_file "$@" || exit 1
+create_metadata_file "${OPTIONS[@]}" "$topdir" "$comp" || exit 1
