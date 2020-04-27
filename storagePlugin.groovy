@@ -44,7 +44,6 @@ storage {
 	    	def srcItemInfo = repositories.getItemInfo(srcRepoPath)
 		
 		if ( ! isFreeSpaceEnough(rootDir, srcRepoPath)) {
-		    println "DEBUG2"
 		    throw new CancelException("Not enough free space [" + item.repoPath + "] ", 500)
 		}
 	    }
@@ -53,7 +52,6 @@ storage {
 
     // Copy whole repo to local filesystem without deleted package and regenerate metadata    
     afterDelete { item ->
-
         // Remove local filesystem directory associated with repository if it was deleted
 	if ( ! item.repoPath.isRoot()){
 	    if (item.repoPath.getParent().isRoot()){
@@ -87,26 +85,38 @@ storage {
     		    def srcItemInfo = repositories.getItemInfo(srcRepoPath)
 		    
 		    // Copy repositories RPMS directory to local filesystem
-		    repositories.getChildren(srcItemInfo.repoPath).each {
-			if (it.repoPath != item.repoPath) {
-			    if (it.repoPath.isFile()) {
-				def File packageDirInFilestore = new File(filestoreDir, it.sha1.substring(0, 2))
-				def File packageFileInFilestore = new File(packageDirInFilestore, it.sha1)
-    				install(packageFileInFilestore.toString(), it.repoPath.toString())
+
+		    def artifactsCount = repositories.getChildren(srcItemInfo.repoPath).size()
+		    // Check if current artifact is the last 
+		    if (artifactsCount > 1) {
+			repositories.getChildren(srcItemInfo.repoPath).each {
+			    if (it.repoPath != item.repoPath) {
+				def Thread thread = new Thread(){
+				    public void run() {
+					def File packageDirInFilestore = new File(filestoreDir, it.sha1.substring(0, 2))
+					def File packageFileInFilestore = new File(packageDirInFilestore, it.sha1)
+    					install(packageFileInFilestore.toString(), it.repoPath.toString())
+				    }
+				}
+				thread.start()
 			    }
-			}
-    		    }
-		    
-		    log.warn("Recalculating of Rpm metadata started for " + item.repoPath.repoKey + ':' + rootDirInRepo)
-		    genmetadata(rootDir.getAbsolutePath(), repoName, true)
-		    
+    			}
+			log.warn("Recalculating of Rpm metadata started for " + item.repoPath.repoKey + ':' + rootDirInRepo)
+			genmetadata(rootDir.getAbsolutePath(), repoName, true)
+		    }
+
 		    // Deploy all generated files to artifactory
 		    baseDir.eachFile {
 			def InputStream fileAsInputStream = new File (it.getAbsolutePath()).newInputStream()
 			def File fileRepoPath = new File (baseDirInRepo, it.getName())
-
-			if( ! deployRepoMetadata(item.repoPath.repoKey, fileRepoPath, fileAsInputStream)) {
-			    throw new Exception ("Can't deploy " + fileRepoPath + " for package " + item.name)
+			
+			if (artifactsCount > 1) {
+			    if( ! deployRepoMetadata(item.repoPath.repoKey, fileRepoPath, fileAsInputStream)) {
+				throw new Exception ("Can't deploy " + fileRepoPath + " for package " + item.name)
+			    }
+			} else {
+			    // Remove all files in case of all artifacts deleting.
+			    it.delete()
 			}
 		    }
 
@@ -198,7 +208,6 @@ def genmetadata (String packageDir, String repositoryName, Boolean regenerate) {
     } else {
 	genmetadataCmd = genmetadataCmd.replace('{options}', '--append')
     }
-
     execLn = genmetadataCmd.execute()
     if (execLn.waitFor() != 0) {
 	throw new Exception("Non zero status returned: " + genmetadataCmd);
@@ -210,8 +219,6 @@ def boolean isFreeSpaceEnough(File repoRoot, RepoPath srcRepoPath) {
     def artifactsSize = repositories.getArtifactsSize(srcRepoPath)
     def freePercent = Math.ceil((repoRoot.getFreeSpace() - artifactsSize) * 100 / repoRoot.getTotalSpace())
     
-    println "DEBUG :" + freePercent + "%"
-
     if ( freePercent < 5 ) {
 	return false
     } else {

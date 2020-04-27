@@ -97,7 +97,7 @@ function create_metadata_file() {
 
     PIDS=()
 
-    genpkglist --bloat "$@"
+    genpkglist --bloat "$@" || return 1
 
     rm -f "$pkglist.$comp".{xz,bz2}
 
