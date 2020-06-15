@@ -65,3 +65,4 @@ If package with the same file name is already in artifactory it will answer with
 It is not possible to load package with the same name twice to prevent duplicates in pkglist. 
 On every error occured during copying from filestore, generating metadata or deploy, it will cancel package uploading and return 500 error. 
 Plugin works for the path which contains directory with name "altlinux" only.
+Due to limitation of genpkglist tool it is not available to delete package from the already generated metadata file. For removing one file whole repository should be processed again except the removed file. When file is removed plugin locks metadata file and starts processing files from repository one by one until it's done.
